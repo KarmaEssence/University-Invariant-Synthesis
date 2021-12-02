@@ -113,48 +113,6 @@ let () =
   print_string "\n";
   print_string "(=================================)\n"  
 
-(* Question 3. Écrire une fonction str_assert_for_all qui prend en
-   argument un entier n et une chaîne de caractères s, et retourne
-   l'expression SMTLIB qui correspond à la formule "forall x1 ... xk
-   (s)".
-
-  Par exemple, str_assert_forall 2 "< x1 x2" retourne : "(assert
-   (forall ((x1 Int) (x2 Int)) (< x1 x2)))".  *)
-
-(*let is_op str = 
-  match str with
-  | "+" -> true
-  | "*" -> true
-  | "=" -> true
-  | "<" -> true 
-  | "(<" -> true 
-  | "(=" -> true
-  | _ -> false
-
-let str_assert s = "(assert " ^ s ^ ")"
-let str_for_all param comp = "(forall (" ^ param ^ ")" ^ " " ^ comp ^ ")"
-
-let str_param list_size str = 
-  if list_size = 0 then 
-    let list = String.split_on_char ')' str in 
-    "(" ^ List.hd list ^ " Int)" 
-  else "(" ^ str ^ " Int) "    
-
-let rec str_params list_of_string str_res = 
-  match list_of_string with
-  | [] -> str_res
-  | str :: sub_list_of_string ->
-    if is_op str then 
-      str_params sub_list_of_string str_res
-    else
-      let param = str_param (List.length sub_list_of_string) str in
-      str_params sub_list_of_string (str_res ^ param)
-
-let str_assert_forall n s = 
-  let list = String.split_on_char ' ' s in
-  let forall_str = str_for_all (str_params list "") s in
-  str_assert forall_str*)
-
 let rec unique_element_in_list list list_res = 
   match list with
   | [] -> list_res
@@ -192,6 +150,7 @@ let str_assert_forall n s =
 let () = 
   let test_1 = str_assert_forall 2 "< x1 x2" in
   let test_2 = str_assert_forall 2 "=> (and (Invar i v) (< i 3)) (Invar (+ i 1) (+ v 3))" in
+  let test_3 = str_assert_forall 3 "=> (and (Invar x1 x2 x3 ) (>= x1 10)) (< x2 x3)))" in
 
   print_string "(=================================)\n";
   print_string "Test de str_assert_for_all\n";
@@ -199,6 +158,7 @@ let () =
   print_string "\n";
   Printf.printf "Test 1 : %s\n" test_1;
   Printf.printf "Test 2 : %s\n" test_2;
+  Printf.printf "Test 3 : %s\n" test_3;
   print_string "\n";
   print_string "(=================================)\n"    
 
@@ -228,7 +188,7 @@ let str_of_test_reverse t =
   | Equals (t1, t2) -> 
     let str_of_t1 = str_of_term t1 in
     let str_of_t2 = str_of_term t2 in
-    str_of_operation "!=" str_of_t1 str_of_t2
+    "!" ^ str_of_operation "=" str_of_t1 str_of_t2
   
   | LessThan (t1, t2) -> 
     let str_of_t1 = str_of_term t1 in
@@ -236,7 +196,7 @@ let str_of_test_reverse t =
     str_of_operation ">=" str_of_t1 str_of_t2  
 
 let make_loop_insertion_str p = 
-  let loop_cond = "(and " ^ "(Invar" ^ (make_str_variable 1 p.nvars "") ^ ") " ^ (str_of_test_reverse p.loopcond) ^ ")" in
+  let loop_cond = "(and " ^ "(Invar" ^ (make_str_variable 1 p.nvars "") ^ " ) " ^ (str_of_test_reverse p.loopcond) ^ ")" in
   "=> " ^ loop_cond ^ " " ^ (str_of_test p.assertion)   
 
 let smtlib_of_wa p = 
@@ -289,4 +249,22 @@ print_string "(=================================)\n"
    un autre programme test, et vérifiez qu'il donne un fichier SMTLIB
    de la forme attendue. *)
 
-let p2 = None (* À compléter *)
+let p2 = {
+    nvars = 3;
+    inits = [(Const 0) ; (Const 1); (Const 5)];
+    loopcond = LessThan ((Var 1), (Const 10));
+    mods = [Add ((Var 1), (Const 2)); Add ((Var 2), (Const 1)); Add ((Var 3), (Var 2))];
+    assertion = LessThan ((Var 2), (Var 3))
+}
+
+
+let () = 
+print_string "(=================================)\n";
+print_string "Test de smtlib_of_wa\n";
+print_string "(=================================)\n";
+print_string "\n";
+
+Printf.printf "%s" (smtlib_of_wa p2);
+
+print_string "\n";
+print_string "(=================================)\n"
