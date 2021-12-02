@@ -57,7 +57,7 @@ let str_of_test t =
   | LessThan (t1, t2) -> 
     let str_of_t1 = str_of_term t1 in
     let str_of_t2 = str_of_term t2 in
-    str_of_operation "<" str_of_t1 str_of_t2
+    str_of_operation "<" str_of_t1 str_of_t2    
 
 
   let () = 
@@ -223,6 +223,22 @@ let make_loop_condition_str p =
   let loop_cond = "(and " ^ "(Invar" ^ (make_str_variable 1 p.nvars "") ^ ") " ^ (str_of_test p.loopcond) ^ ")" in
   "=> " ^ loop_cond ^ " " ^ str_condition p.mods  
 
+let str_of_test_reverse t = 
+  match t with
+  | Equals (t1, t2) -> 
+    let str_of_t1 = str_of_term t1 in
+    let str_of_t2 = str_of_term t2 in
+    str_of_operation "!=" str_of_t1 str_of_t2
+  
+  | LessThan (t1, t2) -> 
+    let str_of_t1 = str_of_term t1 in
+    let str_of_t2 = str_of_term t2 in
+    str_of_operation ">=" str_of_t1 str_of_t2  
+
+let make_loop_insertion_str p = 
+  let loop_cond = "(and " ^ "(Invar" ^ (make_str_variable 1 p.nvars "") ^ ") " ^ (str_of_test_reverse p.loopcond) ^ ")" in
+  "=> " ^ loop_cond ^ " " ^ (str_of_test p.assertion)   
+
 let smtlib_of_wa p = 
   let declare_invariant n =
     "; synthèse d'invariant de programme\n"
@@ -238,14 +254,14 @@ let smtlib_of_wa p =
     ^ str_assert (str_condition p.inits) in
   let assertion_condition p =
     "; l'assertion finale est vérifiée\n"
-    ^ str_assert (str_condition p.assertion) in
+    ^ str_assert_forall p.nvars (make_loop_insertion_str p) in
     (*str_assert_forall p.nvars (str_of_test p.assertion) in*)
   
   let call_solver =
     "; appel au solveur\n(check-sat-using (then qe smt))\n(get-model)\n(exit)\n" in
   String.concat "\n" [declare_invariant p.nvars;
-                      loop_condition p;
                       initial_condition p;
+                      loop_condition p;
                       assertion_condition p;
                       call_solver]
 
