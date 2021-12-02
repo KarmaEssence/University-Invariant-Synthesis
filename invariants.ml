@@ -64,6 +64,7 @@ let str_of_test t =
     let test_1 = str_of_term (Var 3) in
     let test_2 = str_of_term (Add(Var 1, Const 3)) in
     let test_3 = str_of_test (Equals (Var 2, Const 2)) in
+    let test_4 = str_of_test (LessThan ((Var 1),(Const 3))) in
 
     print_string "(=================================)\n";
     print_string "Test de str_of_term et str_of_test\n";
@@ -72,6 +73,7 @@ let str_of_test t =
     Printf.printf "Test 1 : %s\n" test_1;
     Printf.printf "Test 2 : %s\n" test_2;
     Printf.printf "Test 3 : %s\n" test_3;
+    Printf.printf "Test 4 : %s\n" test_4;
     print_string "\n";
     print_string "(=================================)\n"
 
@@ -116,25 +118,29 @@ let () =
   Par exemple, str_assert_forall 2 "< x1 x2" retourne : "(assert
    (forall ((x1 Int) (x2 Int)) (< x1 x2)))".  *)
 
-let is_op str = 
+(*let is_op str = 
   match str with
   | "+" -> true
   | "*" -> true
   | "=" -> true
   | "<" -> true 
-  | _ -> false  
+  | "(<" -> true 
+  | "(=" -> true
+  | _ -> false
 
 let str_assert s = "(assert " ^ s ^ ")"
-let str_for_all param comp = "(forall (" ^ param ^")" ^ " ("^ comp ^ ")" ^ ")"
+let str_for_all param comp = "(forall (" ^ param ^ ")" ^ " " ^ comp ^ ")"
+
 let str_param list_size str = 
-  if list_size = 0 then "(" ^ str ^ " Int)" 
+  if list_size = 0 then 
+    let list = String.split_on_char ')' str in 
+    "(" ^ List.hd list ^ " Int)" 
   else "(" ^ str ^ " Int) "    
 
 let rec str_params list_of_string str_res = 
   match list_of_string with
   | [] -> str_res
   | str :: sub_list_of_string ->
-
     if is_op str then 
       str_params sub_list_of_string str_res
     else
@@ -143,17 +149,53 @@ let rec str_params list_of_string str_res =
 
 let str_assert_forall n s = 
   let list = String.split_on_char ' ' s in
-  let forall_str = str_for_all (str_params list "") (s) in
+  let forall_str = str_for_all (str_params list "") s in
+  str_assert forall_str*)
+
+let rec unique_element_in_list list list_res = 
+  match list with
+  | [] -> list_res
+  | element :: sub_list ->
+    if List.mem element list_res then
+      unique_element_in_list sub_list list_res
+    else unique_element_in_list sub_list (element :: list_res)  
+
+let str_assert s = "(assert " ^ s ^ ")"
+
+let str_for_all param comp = "(forall (" ^ param ^ ")" ^ " (" ^ comp ^ "))"
+
+let str_param list_size str = 
+  if list_size = 0 then 
+    let list = String.split_on_char ')' str in 
+    "(" ^ List.hd list ^ " Int)" 
+  else "(" ^ str ^ " Int) "
+
+let rec str_params list_of_string str_res = 
+  match list_of_string with
+  | [] -> str_res
+  | str :: sub_list_of_string ->
+    let param = str_param (List.length sub_list_of_string) str in
+    str_params sub_list_of_string (str_res ^ param)
+
+(*List.filter, String.starts_with, String.ends_with *)  
+let str_assert_forall n s = 
+  let list = String.split_on_char ' ' s in 
+  let clean_list = List.filter (fun a -> a <> List.hd list && (String.get a 0) <> '(' 
+  && (String.get a (String.length a - 1) <> ')')) list in
+  let clean_list_res = List.rev (unique_element_in_list clean_list []) in
+  let forall_str = str_for_all (str_params clean_list_res "") s in
   str_assert forall_str
 
 let () = 
   let test_1 = str_assert_forall 2 "< x1 x2" in
+  let test_2 = str_assert_forall 2 "=> (and (Invar i v) (< i 3)) (Invar (+ i 1) (+ v 3))" in
 
   print_string "(=================================)\n";
   print_string "Test de str_assert_for_all\n";
   print_string "(=================================)\n";
   print_string "\n";
   Printf.printf "Test 1 : %s\n" test_1;
+  Printf.printf "Test 2 : %s\n" test_2;
   print_string "\n";
   print_string "(=================================)\n"    
 
@@ -166,16 +208,16 @@ let smtlib_of_wa p =
   let declare_invariant n =
     "; synthèse d'invariant de programme\n"
     ^"; on déclare le symbole non interprété de relation Invar\n"
-    ^"declare-fun Invar (" ^ string_repeat "Int " n ^  ") Bool)" in
+    ^"(declare-fun Invar (" ^ string_repeat "Int " n ^  ") Bool)" in
   let loop_condition p =
     "; la relation Invar est un invariant de boucle\n"
-    ^"TODO" (* À compléter *) in
+    ^ str_assert_forall p.nvars (str_of_test p.loopcond) in
   let initial_condition p =
     "; la relation Invar est vraie initialement\n"
-    ^str_assert (str_condition p.inits) in
+    ^ str_assert (str_condition p.inits) in
   let assertion_condition p =
     "; l'assertion finale est vérifiée\n"
-    ^"TODO" (* À compléter *) in
+    ^ str_assert_forall p.nvars (str_of_test p.assertion) in
   let call_solver =
     "; appel au solveur\n(check-sat-using (then qe smt))\n(get-model)\n(exit)\n" in
   String.concat "\n" [declare_invariant p.nvars;
@@ -191,7 +233,16 @@ let p1 = {nvars = 2;
           assertion = Equals ((Var 2),(Const 9))}
 
 
-let () = Printf.printf "%s" (smtlib_of_wa p1)
+let () = 
+print_string "(=================================)\n";
+print_string "Test de smtlib_of_wa\n";
+print_string "(=================================)\n";
+print_string "\n";
+
+Printf.printf "%s" (smtlib_of_wa p1);
+
+print_string "\n";
+print_string "(=================================)\n"
 
 (* Question 5. Vérifiez que votre implémentation donne un fichier
    SMTLIB qui est équivalent au fichier que vous avez écrit à la main
