@@ -30,18 +30,6 @@ let x n = "x" ^ string_of_int n
    (Var 1, Const 3)) retourne "(+ x1 3)" et str_of_test (Equals (Var
    2, Const 2)) retourne "(= x2 2)".  *)
 
-let is_Var t =
-  match t with 
-  | Var (_) -> true
-  | _ -> false
-
-let get_content t = 
-  match t with
-  | Var (value) -> value
-  | Const (value) -> value  
-  | _ -> failwith "Unbound type"
-
-
 let str_of_operation str t1 t2 =      
   "(" ^ str ^ " " ^  t1 ^ " " ^ t2 ^ ")"
 
@@ -95,7 +83,30 @@ let string_repeat s n =
    exprime que le tuple (t1, ..., tk) est dans l'invariant.  Par
    exemple, str_condition [Var 1; Const 10] retourne "(Invar x1 10)".
    *)
-let str_condition l = "TODO" (* À compléter *)
+
+let rec make_str_condition list str =
+  match list with
+  | [] -> str
+  | element :: sub_list -> 
+    if List.length sub_list == 0 then
+      make_str_condition sub_list (str ^ str_of_term element)
+    else  
+      make_str_condition sub_list (str ^ str_of_term element ^ " ")
+
+let str_condition l = 
+  let str_res = make_str_condition l "" in
+  "(Invar " ^ str_res ^ ")"
+
+let () = 
+  let test_1 = str_condition [Var 1; Const 10] in
+
+  print_string "(=================================)\n";
+  print_string "Test de str_condition\n";
+  print_string "(=================================)\n";
+  print_string "\n";
+  Printf.printf "Test 1 : %s\n" test_1;
+  print_string "\n";
+  print_string "(=================================)\n"  
 
 (* Question 3. Écrire une fonction str_assert_for_all qui prend en
    argument un entier n et une chaîne de caractères s, et retourne
