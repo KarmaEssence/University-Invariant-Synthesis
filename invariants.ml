@@ -22,16 +22,70 @@ type program = {nvars : int;
 
 let x n = "x" ^ string_of_int n
 
-(* Question 1. Écrire des fonctions `str_of_term` et `str_of_term` qui
+(* Question 1. Écrire des fonctions `str_of_term` et `str_of_test` qui
    convertissent des termes et des tests en chaînes de caractères du
    format SMTLIB.
 
   Par exemple, str_of_term (Var 3) retourne "x3", str_of_term (Add
    (Var 1, Const 3)) retourne "(+ x1 3)" et str_of_test (Equals (Var
    2, Const 2)) retourne "(= x2 2)".  *)
-let rec str_of_term t = "TODO" (* À compléter *)
 
-let str_of_test t = "TODO" (* À compléter *)
+let is_Var t =
+  match t with 
+  | Var (_) -> true
+  | _ -> false
+
+let get_content t = 
+  match t with
+  | Var (value) -> value
+  | Const (value) -> value  
+  | _ -> failwith "Unbound type"
+
+
+let str_of_operation str t1 t2 =      
+  "(" ^ str ^ " " ^  t1 ^ " " ^ t2 ^ ")"
+
+let rec str_of_term t = 
+  match t with
+  | Const (value) -> string_of_int value
+  | Var (value) -> x value
+  | Add (t1, t2) -> 
+    let str_of_t1 = str_of_term t1 in
+    let str_of_t2 = str_of_term t2 in
+    str_of_operation "+" str_of_t1 str_of_t2      
+
+  | Mult (t1, t2) -> 
+    let str_of_t1 = str_of_term t1 in
+    let str_of_t2 = str_of_term t2 in
+    str_of_operation "*" str_of_t1 str_of_t2
+
+let str_of_test t = 
+  match t with
+  | Equals (t1, t2) -> 
+    let str_of_t1 = str_of_term t1 in
+    let str_of_t2 = str_of_term t2 in
+    str_of_operation "=" str_of_t1 str_of_t2
+
+  | LessThan (t1, t2) -> 
+    let str_of_t1 = str_of_term t1 in
+    let str_of_t2 = str_of_term t2 in
+    str_of_operation "<" str_of_t1 str_of_t2
+
+
+  let () = 
+    let test_1 = str_of_term (Var 3) in
+    let test_2 = str_of_term (Add(Var 1, Const 3)) in
+    let test_3 = str_of_test (Equals (Var 2, Const 2)) in
+
+    print_string "(=================================)\n";
+    print_string "Test de str_of_term et str_of_test\n";
+    print_string "(=================================)\n";
+    print_string "\n";
+    Printf.printf "Test 1 : %s\n" test_1;
+    Printf.printf "Test 2 : %s\n" test_2;
+    Printf.printf "Test 3 : %s\n" test_3;
+    print_string "\n";
+    print_string "(=================================)\n"
 
 let string_repeat s n =
   Array.fold_left (^) "" (Array.make n s)
