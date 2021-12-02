@@ -116,9 +116,47 @@ let () =
   Par exemple, str_assert_forall 2 "< x1 x2" retourne : "(assert
    (forall ((x1 Int) (x2 Int)) (< x1 x2)))".  *)
 
-let str_assert s = "(assert " ^ s ^ ")"
+let is_op str = 
+  match str with
+  | "+" -> true
+  | "*" -> true
+  | "=" -> true
+  | "<" -> true 
+  | _ -> false  
 
-let str_assert_forall n s = "TODO" (* À compléter *)
+let str_assert s = "(assert " ^ s ^ ")"
+let str_for_all param comp = "(forall (" ^ param ^")" ^ " ("^ comp ^ ")" ^ ")"
+let str_param list_size str = 
+  if list_size = 0 then "(" ^ str ^ " Int)" 
+  else "(" ^ str ^ " Int) "    
+
+let rec str_params list_of_string str_res = 
+  match list_of_string with
+  | [] -> str_res
+  | str :: sub_list_of_string ->
+
+    if is_op str then 
+      str_params sub_list_of_string str_res
+    else
+      let param = str_param (List.length sub_list_of_string) str in
+      str_params sub_list_of_string (str_res ^ param)
+
+let str_assert_forall n s = 
+  let list = String.split_on_char ' ' s in
+  let forall_str = str_for_all (str_params list "") (s) in
+  str_assert forall_str
+
+let () = 
+  let test_1 = str_assert_forall 2 "< x1 x2" in
+
+  print_string "(=================================)\n";
+  print_string "Test de str_assert_for_all\n";
+  print_string "(=================================)\n";
+  print_string "\n";
+  Printf.printf "Test 1 : %s\n" test_1;
+  print_string "\n";
+  print_string "(=================================)\n"    
+
 
 (* Question 4. Nous donnons ci-dessous une définition possible de la
    fonction smt_lib_of_wa. Complétez-la en écrivant les définitions de
