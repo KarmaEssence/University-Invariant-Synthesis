@@ -101,12 +101,15 @@ let str_condition l =
 
 let () = 
   let test_1 = str_condition [Var 1; Const 10] in
+  let test_2 = str_condition [Add ((Var 1), (Const 1)); Add ((Var 2), (Const 3))] in
+  
 
   print_string "(=================================)\n";
   print_string "Test de str_condition\n";
   print_string "(=================================)\n";
   print_string "\n";
   Printf.printf "Test 1 : %s\n" test_1;
+  Printf.printf "Test 2 : %s\n" test_2;
   print_string "\n";
   print_string "(=================================)\n"  
 
@@ -204,20 +207,40 @@ let () =
    fonction smt_lib_of_wa. Complétez-la en écrivant les définitions de
    loop_condition et assertion_condition. *)
 
+(*let rec get_var_from_list list res_list = 
+  match list with
+  | [] -> res_list
+  | element :: sub_list ->*)
+    
+let rec make_str_variable num max str =
+  if num > max then
+    str
+  else
+    let new_str = str ^ " " ^ (x num) in
+    make_str_variable (num + 1) max new_str
+
+let make_loop_condition_str p = 
+  let loop_cond = "(and " ^ "(Invar" ^ (make_str_variable 1 p.nvars "") ^ ") " ^ (str_of_test p.loopcond) ^ ")" in
+  "=> " ^ loop_cond ^ " " ^ str_condition p.mods  
+
 let smtlib_of_wa p = 
   let declare_invariant n =
     "; synthèse d'invariant de programme\n"
     ^"; on déclare le symbole non interprété de relation Invar\n"
     ^"(declare-fun Invar (" ^ string_repeat "Int " n ^  ") Bool)" in
   let loop_condition p =
+    print_string (make_loop_condition_str p ^ "\n");
     "; la relation Invar est un invariant de boucle\n"
-    ^ str_assert_forall p.nvars (str_of_test p.loopcond) in
+    ^ str_assert_forall p.nvars (make_loop_condition_str p) in
+    (*str_assert_forall p.nvars (str_of_test p.loopcond) in*)
   let initial_condition p =
     "; la relation Invar est vraie initialement\n"
     ^ str_assert (str_condition p.inits) in
   let assertion_condition p =
     "; l'assertion finale est vérifiée\n"
-    ^ str_assert_forall p.nvars (str_of_test p.assertion) in
+    ^ str_assert (str_condition p.assertion) in
+    (*str_assert_forall p.nvars (str_of_test p.assertion) in*)
+  
   let call_solver =
     "; appel au solveur\n(check-sat-using (then qe smt))\n(get-model)\n(exit)\n" in
   String.concat "\n" [declare_invariant p.nvars;
