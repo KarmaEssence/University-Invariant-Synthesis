@@ -179,9 +179,13 @@ let rec make_str_variable num max str =
     let new_str = str ^ " " ^ (x num) in
     make_str_variable (num + 1) max new_str
 
-let make_loop_condition_str p = 
-  let loop_cond = "(and " ^ "(Invar" ^ (make_str_variable 1 p.nvars "") ^ ") " ^ (str_of_test p.loopcond) ^ ")" in
-  "=> " ^ loop_cond ^ " " ^ str_condition p.mods  
+(*let rec str_of_var t str_res = 
+  match t with
+  | Const (value) -> ""
+  | Var (value) -> x value
+  | _ ->    
+    let str_of_t1 = str_of_term t1 in
+    let str_of_t2 = str_of_term t2 in*)
 
 let str_of_test_reverse t = 
   match t with
@@ -189,11 +193,15 @@ let str_of_test_reverse t =
     let str_of_t1 = str_of_term t1 in
     let str_of_t2 = str_of_term t2 in
     "!" ^ str_of_operation "=" str_of_t1 str_of_t2
-  
+      
   | LessThan (t1, t2) -> 
     let str_of_t1 = str_of_term t1 in
     let str_of_t2 = str_of_term t2 in
-    str_of_operation ">=" str_of_t1 str_of_t2  
+    str_of_operation ">=" str_of_t1 str_of_t2      
+
+let make_loop_condition_str p = 
+  let loop_cond = "(and " ^ "(Invar" ^ (make_str_variable 1 p.nvars "") ^ ") " ^ (str_of_test p.loopcond) ^ ")" in
+  "=> " ^ loop_cond ^ " " ^ str_condition p.mods   
 
 let make_loop_insertion_str p = 
   let loop_cond = "(and " ^ "(Invar" ^ (make_str_variable 1 p.nvars "") ^ " ) " ^ (str_of_test_reverse p.loopcond) ^ ")" in
@@ -205,7 +213,6 @@ let smtlib_of_wa p =
     ^"; on déclare le symbole non interprété de relation Invar\n"
     ^"(declare-fun Invar (" ^ string_repeat "Int " n ^  ") Bool)" in
   let loop_condition p =
-    print_string (make_loop_condition_str p ^ "\n");
     "; la relation Invar est un invariant de boucle\n"
     ^ str_assert_forall p.nvars (make_loop_condition_str p) in
     (*str_assert_forall p.nvars (str_of_test p.loopcond) in*)
@@ -251,9 +258,9 @@ print_string "(=================================)\n"
 
 let p2 = {
     nvars = 3;
-    inits = [(Const 0) ; (Const 1); (Const 5)];
-    loopcond = LessThan ((Var 1), (Const 10));
-    mods = [Add ((Var 1), (Const 2)); Add ((Var 2), (Const 1)); Add ((Var 3), (Var 2))];
+    inits = [(Const 0) ; (Const 0); (Const 5)];
+    mods = [Add ((Var 1), (Const 1)); Add ((Var 2), (Const 5)); Add ((Var 3), (Var 2))];
+    loopcond = LessThan ((Var 1), (Const 3));
     assertion = LessThan ((Var 2), (Var 3))
 }
 
