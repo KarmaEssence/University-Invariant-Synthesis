@@ -166,11 +166,6 @@ let () =
 (* Question 4. Nous donnons ci-dessous une définition possible de la
    fonction smt_lib_of_wa. Complétez-la en écrivant les définitions de
    loop_condition et assertion_condition. *)
-
-(*let rec get_var_from_list list res_list = 
-  match list with
-  | [] -> res_list
-  | element :: sub_list ->*)
     
 let rec make_str_variable num max str =
   if num > max then
@@ -178,14 +173,6 @@ let rec make_str_variable num max str =
   else
     let new_str = str ^ " " ^ (x num) in
     make_str_variable (num + 1) max new_str
-
-(*let rec str_of_var t str_res = 
-  match t with
-  | Const (value) -> ""
-  | Var (value) -> x value
-  | _ ->    
-    let str_of_t1 = str_of_term t1 in
-    let str_of_t2 = str_of_term t2 in*)
 
 let str_of_test_reverse t = 
   match t with
